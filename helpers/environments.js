@@ -16,9 +16,9 @@ environments.staging = {
   secretKey: "ksdfkajsdioert",
   maxCheks: 5,
   twilio: {
-    fromPhone: "+15076323009",
-    accountSid: "AC3bf23b7a855a44f50732d4ea823e3bd8",
-    authToken: "f606be181fc2302939926ca09ad33216",
+    fromPhone: "from phone number",
+    accountSid: "your twilio account SID",
+    authToken: "your twilio account auth token",
   },
 };
 
