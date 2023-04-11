@@ -1,39 +1,29 @@
 /*
- * Title: First nodejs application
- * Description: Running qoutes randomly..
+ * Title: Initial File
+ * Description: Initial file statrt the node server and workers..
  * Author: Rubel Amin
  * Date: 13/02/2023
  */
 
 // Dependencies
-const http = require("http");
-const { handleReqRes } = require("./helpers/handleReqRes");
+const server = require("./lib/server");
+const workers = require("./lib/worker");
+
 const environment = require("./helpers/environments");
 const data = require("./lib/data");
 
 // App Object - Module Scaffolding
 const app = {};
 
-// testing file system
-// data.delete("test", "newFile", (err) => {
-//   console.log(`${err}`);
-// });
+app.init = () => {
+  // start the server
+  server.init();
 
-// Configuration
-app.config = {
-  port: 3000,
+  // start the worker
+  workers.init();
 };
 
-// Create Server
-app.createServer = () => {
-  const server = http.createServer(app.handleRequest);
-  server.listen(environment.port, () => {
-    console.log(`Server running at port ${environment.port}`);
-  });
-};
+app.init();
 
-// handle request response
-app.handleRequest = handleReqRes;
-
-// start the server
-app.createServer();
+// export the app
+module.exports = app;

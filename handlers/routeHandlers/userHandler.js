@@ -8,6 +8,7 @@
 // dependencies
 const data = require("../../lib/data");
 const { hash, parseJSON } = require("../../helpers/utilities");
+const tokenHandler = require("./tokenHandler");
 
 // module scaffolding
 const handler = {};
@@ -89,6 +90,7 @@ handler._users.post = (requestProperties, callback) => {
 };
 
 handler._users.get = (requestProperties, callback) => {
+  // check the phone/userid if valid
   const phone =
     typeof requestProperties.queryStringObject.phone === "string" &&
     requestProperties.queryStringObject.phone.trim().length === 11
@@ -96,15 +98,28 @@ handler._users.get = (requestProperties, callback) => {
       : false;
 
   if (phone) {
-    // look up the user
-    data.read("users", phone, (err, u) => {
-      const user = { ...parseJSON(u) };
-      if (!err && user) {
-        delete user.password;
-        callback(200, user);
+    // verify token
+    let token =
+      typeof requestProperties.headersObject.token === "string"
+        ? requestProperties.headersObject.token
+        : false;
+    tokenHandler._token.verify(token, phone, (tokenId) => {
+      if (tokenId) {
+        // look up the user
+        data.read("users", phone, (err, u) => {
+          const user = { ...parseJSON(u) };
+          if (!err && user) {
+            delete user.password;
+            callback(200, user);
+          } else {
+            callback(400, {
+              error: "Something went wrong",
+            });
+          }
+        });
       } else {
-        callback(400, {
-          error: "Something went wrong",
+        callback(403, {
+          error: "Not authenticated",
         });
       }
     });
@@ -142,34 +157,47 @@ handler._users.put = (requestProperties, callback) => {
 
   if (phone) {
     if (firstName || lastName || password) {
-      // look up the user
-      data.read("users", phone, (err1, uData) => {
-        const userData = { ...parseJSON(uData) };
-        if (!err1 && userData) {
-          if (firstName) {
-            userData.firstName = firstName;
-          }
-          if (lastName) {
-            userData.lastName = lastName;
-          }
-          if (password) {
-            userData.password = hash(password);
-          }
-          // store to update database
-          data.update("users", phone, userData, (err2) => {
-            if (!err2) {
-              callback(200, {
-                message: "The user was updated succesfully",
+      // verify token
+      let token =
+        typeof requestProperties.headersObject.token === "string"
+          ? requestProperties.headersObject.token
+          : false;
+      tokenHandler._token.verify(token, phone, (tokenId) => {
+        if (tokenId) {
+          // look up the user
+          data.read("users", phone, (err1, uData) => {
+            const userData = { ...parseJSON(uData) };
+            if (!err1 && userData) {
+              if (firstName) {
+                userData.firstName = firstName;
+              }
+              if (lastName) {
+                userData.lastName = lastName;
+              }
+              if (password) {
+                userData.password = hash(password);
+              }
+              // store to update database
+              data.update("users", phone, userData, (err2) => {
+                if (!err2) {
+                  callback(200, {
+                    message: "The user was updated succesfully",
+                  });
+                } else {
+                  callback(500, {
+                    error: "There was a problem in the server side",
+                  });
+                }
               });
             } else {
-              callback(500, {
-                error: "There was a problem in the server side",
+              callback(400, {
+                error: "Something went wrong!",
               });
             }
           });
         } else {
-          callback(400, {
-            error: "Something went wrong!",
+          callback(403, {
+            error: "Not authenticated",
           });
         }
       });
@@ -192,23 +220,36 @@ handler._users.delete = (requestProperties, callback) => {
       ? requestProperties.queryStringObject.phone
       : false;
   if (phone) {
-    // look up the database
-    data.read("users", phone, (err1, datas) => {
-      if (!err1 && datas) {
-        data.delete("users", phone, (err2) => {
-          if (!err2) {
-            callback(200, {
-              message: "User was deleted successfully",
+    // verify token
+    let token =
+      typeof requestProperties.headersObject.token === "string"
+        ? requestProperties.headersObject.token
+        : false;
+    tokenHandler._token.verify(token, phone, (tokenId) => {
+      if (tokenId) {
+        // look up the database
+        data.read("users", phone, (err1, datas) => {
+          if (!err1 && datas) {
+            data.delete("users", phone, (err2) => {
+              if (!err2) {
+                callback(200, {
+                  message: "User was deleted successfully",
+                });
+              } else {
+                callback(500, {
+                  error: "There was an error to delete the user",
+                });
+              }
             });
           } else {
             callback(500, {
-              error: "There was an error to delete the user",
+              error: "There was server side error!",
             });
           }
         });
       } else {
-        callback(500, {
-          error: "There was server side error!",
+        callback(403, {
+          error: "Not authenticated",
         });
       }
     });

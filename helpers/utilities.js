@@ -17,9 +17,8 @@ utilities.parseJSON = (jsonstring) => {
   let output;
   try {
     output = JSON.parse(jsonstring);
-  } catch (error) {
+  } catch {
     output = {};
-    console.log(error);
   }
 
   return output;
@@ -36,6 +35,25 @@ utilities.hash = (password) => {
   } else {
     return false;
   }
+};
+
+// create random string
+utilities.createRandomString = (stringlength) => {
+  let strlength = stringlength;
+  strlength =
+    typeof stringlength === "number" && stringlength > 0 ? stringlength : false;
+  if (strlength) {
+    let possiblecharecters = "abcdefghijklmnopqrstuvwxyz1234567890";
+    let output = "";
+    for (let i = 1; i <= strlength; i += 1) {
+      let randomCharacter = possiblecharecters.charAt(
+        Math.floor(Math.random() * possiblecharecters.length)
+      );
+      output += randomCharacter;
+    }
+    return output;
+  }
+  return false;
 };
 
 module.exports = utilities;
